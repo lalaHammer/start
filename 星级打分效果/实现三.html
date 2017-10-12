@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>实现二</title>
+
+		<style type="text/css">
+			body,
+			ul,
+			li {
+				padding: 0;
+				margin: 0;
+			}
+			
+			li {
+				list-style: none;
+			}
+			
+			.rating {
+				position: relative;
+				width: 160px;
+				background: url(img/rating-no.png) repeat-x;
+				margin: 100px auto;
+			}
+			
+			.rating-display {
+				width: 0px;
+				height: 32px;
+				background: url(img/rating.png) repeat-x;
+			}
+			
+			.rating-mask {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+			}
+			
+			.rating-item {
+				float: left;
+				width: 32px;
+				height: 32px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="rating" class="rating">
+			<!--<div class="rating-display"></div> 展示层
+			<ul class="rating-mask"> 遮罩层
+				<li class="rating-item"></li>
+				<li class="rating-item"></li>
+				<li class="rating-item"></li>
+				<li class="rating-item"></li>
+				<li class="rating-item"></li>
+			</ul>-->
+		</div>
+		<div id="rating2" class="rating"></div>
+
+		<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+		<script type="text/javascript">
+			//使用匿名函数使得函数中的变量为局部的
+			var rating = (function() {
+				//评分
+				var Rating = function(ele, options) {
+					//将参数保存成属性
+					this.$el = $(ele);
+					this.opts = $.extend({}, Rating.DEFAULTS, options);
+					//半颗
+					this.opts.total *= 2;
+					this.opts.num *=2;
+					
+					this.itemWidth = 32/2; //星星的宽度
+					this.displayWidth = this.opts.num * this.itemWidth; //展示层默认宽度,即显示星星的宽度
+				}
+
+				//默认参数
+				Rating.DEFAULTS = {
+					total: 6,
+					num: 1,
+					readOnly: false,
+					select: function() {},
+					chosec: function() {}
+				};
+
+				Rating.prototype.init = function() {
+					this.buildHTML();
+					this.setCSS();
+					if (!this.opts.readOnly) {
+						this.bindEvent();
+					}
+				};
+				//动态添加html
+				Rating.prototype.buildHTML = function() {
+					var html = '<div class="rating-display"></div><ul class="rating-mask">';
+
+					for (var i = 0; i < this.opts.total; i++) {
+						html += '<li class="rating-item"></li>';
+					}
+					html += '</ul>';
+					this.$el.html(html);
+				}
+
+				//设置css
+				Rating.prototype.setCSS = function() {
+					this.$el.width(this.opts.total * this.itemWidth); //总宽度
+					this.$display = this.$el.find('.rating-display');
+					this.$display.width(this.displayWidth); //展示层宽度
+					this.$el.find('.rating-item').width(this.itemWidth); //星星宽度
+				};
+
+				//绑定事件
+				Rating.prototype.bindEvent = function() {
+					var self = this;
+					this.$el.on('mouseover', '.rating-item', function() {
+						var count = $(this).index() + 1;
+						self.$display.width(count * self.itemWidth);
+						(typeof self.opts.select === 'function') && self.opts.select.call(this, count, self.opts.total);
+						self.$el.trigger('select', [count, self.opts.total]);
+					}).on('click', '.rating-item', function() {
+						var count = $(this).index() + 1;
+						self.displayWidth = count * self.itemWidth;
+						(typeof self.opts.chosen === 'function') && self.opts.chosen.call(this, count, self.opts.total);
+						self.$el.trigger('chosen', [count, self.opts.total]);
+					}).on('mouseout', function() {
+						self.$display.width(self.displayWidth);
+					});
+				};
+
+				Rating.prototype.unbindEvent = function() {
+					this.$el.off();
+				};
+
+				var init = function(ele, option) {
+					var $el = $(ele);
+					var rating = $el.data('rating');
+
+					if (!rating) {
+						//当传入的参数为对象时
+						$el.data('rating', (rating = new Rating(ele, typeof option === 'object' && option)));
+						rating.init();
+					}
+					//当传入的参数为字符串时
+					if (typeof option === 'string') {
+						rating[option]();
+					}
+
+				};
+
+				//插件
+				$.fn.extend({
+					rating: function(option) {
+						return this.each(function() {
+							init(this, option);
+						});
+					}
+				});
+
+				return {
+					init: init
+				};
+			})();
+			rating.init('#rating', {
+				total: 5,
+				num: 3,
+				readOnly: false,
+				select: function(count, total) {
+					console.log(count + ' / ' + total);
+				},
+				chosen: function(count) {
+					console.log(count);
+					rating.init('#rating', 'unbindEvent')
+				}
+			});
+
+			$('#rating2').rating({
+				total: 7,
+				num: 1,
+				readOnly: false,
+				chosen: function(count) {
+					$('#rating2').rating('unbindEvent');
+				}
+			});
+		</script>
+	</body>
+
+</html>

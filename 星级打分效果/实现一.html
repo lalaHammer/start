@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title>JS实现星星打分一</title>
+		<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+
+		<style type="text/css">
+			body,
+			ul,
+			li {
+				padding: 0;
+				margin: 0;
+			}
+			
+			li {
+				list-style: none;
+			}
+			
+			#rating {
+				margin: 40px;
+			}
+			
+			.rating-item {
+				width: 32px;
+				height: 32px;
+				background: url(img/start.png);
+				background-position: -62px -10px;
+				display: inline-block;
+				cursor: pointer;
+			}
+			.msg{
+				display: inline-block;
+				margin:0 10px;
+				height: 32px;
+				font: 18px/32px "微软雅黑";
+				vertical-align: text-bottom;
+			}
+		</style>
+	</head>
+
+	<body>
+		<ul id="rating">
+			<li class="rating-item" title="超级差"></li>
+			<li class="rating-item" title="还行"></li>
+			<li class="rating-item" title="一般"></li>
+			<li class="rating-item" title="还不错"></li>
+			<li class="rating-item" title="五星好评"></li>
+			<li class="msg"></li>
+		</ul>
+
+		<script type="text/javascript">
+			var rating = (function() { //解决全局变量的问题
+
+				//点亮星星
+				var lightOn = function($q_item,num) {
+					$q_item.each(function(i) {
+						if (num > i) {
+							$(this).css({
+								backgroundPosition: '-10px -10px'
+							});
+						} else {
+							$(this).css({
+								backgroundPosition: '-62px -10px'
+							});
+						}
+					});
+				};
+
+				//				var num = 2; //初始点亮星星的数目
+				//定义一个变量返回点亮
+				var init = function(el, num) {
+					$q_rating = $(el);
+					$q_item = $q_rating.find('.rating-item');
+
+					lightOn($q_item,num);
+					$q_rating.on('click', '.rating-item', function() { //事件委托
+						num = $(this).index() + 1;
+						$('.msg').html($q_item.eq(num-1).attr("title"));
+					}).on('mouseover', '.rating-item', function() {
+						lightOn($q_item,$(this).index() + 1);
+					}).on('mouseout', function() {
+						lightOn($q_item,num);
+					});
+				};
+				
+				//制作JQuery插件
+				$.fn.extend({
+					rating:function(num){
+						return this.each(function(){//this指向星星,可能不止一个使用each
+							init(this,num);
+						});
+					}
+				});
+				
+				return {
+						init:init
+					};
+			})();
+			
+			
+			rating.init('#rating',2);
+			
+			//使用jQuery插件调用
+			$('#rating').rating(3);
+			
+			
+		</script>
+	</body>
+
+</html>
